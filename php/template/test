@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+require "engine.php";
+
+class Test extends Engine
+{
+	protected $_template  = 'template.phtml';
+	
+	protected $_firstName = '';
+	
+	protected $_lastName  = '';
+	
+	function __construct($firstname, $lastname) {
+		$this->_firstName = $firstname;
+		$this->_lastName  = $lastname;
+	}
+	
+	public function firstName()
+	{
+		return $this->_firstName;
+	}
+	
+	public function lastName()
+	{
+		return $this->_lastName;
+	}
+}
+
+$test = new Test("Steve", "Domino");
+$test->renderAndPrint();

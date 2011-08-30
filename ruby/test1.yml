@@ -1,0 +1,36 @@
+# mother.yml
+
+- user:
+    - index
+    - view
+    - edit
+    - delete
+    - create
+
+- product:
+    - index
+    - view
+    - edit
+    - delete
+    - create
+    
+# there is a possibility we might want to do something like this in the future:
+
+- user:
+    - index
+    view:
+        - password
+        - email
+    edit:
+        - password
+        - email
+    - delete
+    - create    
+
+# to insert these actions into the database, there will be a rake task that will look like: "rake mother:update_actions"
+# the db will then look like this:
+# id    |   action
+# 1     |   user/index
+# 2     |   user/view
+# 3     |   user/edit
+#  and so on

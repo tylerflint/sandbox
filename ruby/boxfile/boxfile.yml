@@ -1,0 +1,27 @@
+writable_directories: [ test2 ]
+
+version: '5.2.17'
+
+extensions: [eaccelerator] 
+
+document_root: '/'
+
+index_list: [index.php]
+
+far_future_expires: false
+
+error_pages:
+    "404": /error.php
+    
+url_rewrites:
+    - ^/location_a.php /location_b.php
+    - 
+        rule: ^/location_a.php /location_b.php
+        conditions:
+            - one
+            - two
+    - 
+        rule: ^/location_a.php /location_b.php
+        conditions:
+            - one
+            - two

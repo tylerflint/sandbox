@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+
+$:.unshift(File.dirname(__FILE__), '/templates')
+$:.unshift(File.dirname(__FILE__))
+
+require 'string_extensions'
+require 'generators/base'
+
+unless ARGV.length > 0
+  puts "Usage: generate name_of_generator"
+  exit
+end
+
+generator = ARGV.shift
+
+unless File::exists?( File.dirname(__FILE__) + "/generators/#{generator.underscore}.rb" )
+  puts "Unable to find generator: #{generator}"
+  exit
+end
+
+require "generators/#{generator.underscore}"
+
+eval "#{generator.classify}.new(ARGV).invoke_all"

@@ -1,0 +1,7 @@
+To <%= name %>:
+
+I speak only the truth! Your cat is ugly.
+
+Sincerely,
+
+<%= enemy %>

@@ -1,0 +1,13 @@
+client:
+    host: 127.0.0.1
+    port: 3307
+    socket: /tmp/mysql_proxy.sock
+
+server:
+    address: 192.168.13.181
+    port: 3306
+
+authentication:
+    app: name
+    instance: name
+    password: password

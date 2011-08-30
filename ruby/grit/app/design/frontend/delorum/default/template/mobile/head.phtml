@@ -1,0 +1,392 @@
+<head>
+	<title>Zumiez</title>
+	<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<link rel="apple-touch-icon" href="<?php echo Mage::getBaseUrl('web') ?>mobile/static/icon.png" />
+	<link rel="stylesheet" href="<?php echo Mage::getBaseUrl('web') ?>mobile/static/spinningwheel.css" type="text/css" media="all" />
+	<script type="text/javascript" src="<?php echo Mage::getBaseUrl('web') ?>mobile/static/migrator.js"></script>
+	<script type="text/javascript" src="<?php echo Mage::getBaseUrl('web') ?>mobile/static/prototype.js"></script>
+	<script type="text/javascript" src="<?php echo Mage::getBaseUrl('web') ?>mobile/static/spinningwheel-min.js"></script>
+	<script type="text/javascript">
+	
+	//cache handling
+	var webappCache = window.applicationCache;
+	function updateCache()
+	{
+		webappCache.update();
+		webappCache.swapCache();
+	}
+	webappCache.addEventListener("updateready", updateCache, false);
+	//webappCache.addEventListener("noupdate", updateCache, false);
+	
+	function saveData()
+	{
+		if(validate()) {
+			//alert($('subfield').value);
+			var db = dbConnect();
+			db.transaction(function(transaction) {	
+				var sql = 'INSERT INTO customer (';
+				if($('emailfield')) {
+					sql = sql + 'email, ';
+				}
+				if($('phonefield')) {
+					sql = sql + 'telephone, ';
+				}
+				if($('dobread')) {
+					sql = sql + 'dob, ';
+				}
+				if($('genderread')) {
+					sql = sql + 'gender, ';
+				}
+				if($('contentfield')) {
+					sql = sql + 'contest, contest_name, promotion_id, ';
+				}
+				if($('subfield')) {
+					sql = sql + 'is_subscribed, ';
+				}
+				sql = sql + 'created_at, ';
+				sql = trim(sql);
+				sql = sql.substring(0, sql.length-1);
+				sql = sql + ') VALUES (';
+				if($('emailfield')) {
+					sql = sql + '\'' + $('emailfield').value + '\', ';
+				}
+				if($('phonefield')) {
+					sql = sql + '\'' + $('phonefield').value + '\', ';
+				}
+				if($('dobread')) {
+					sql = sql + '\'' + $('dobfield').value + '\', ';
+				}
+				if($('genderread')) {
+					var genderValue = Form.getInputs('fields','radio','data[gender]').find(function(radio) { return radio.checked; }).value;
+					sql = sql + '\'' + genderValue + '\', ';
+				}
+				if($('contentfield')) {
+					sql = sql + '\'' + $('contentfield').value + '\', \'' + $('contentname').value + '\', \'' + $('promo').value + '\', ';
+				}
+				if($('subfield')) {
+					sql = sql + '\'' + $('subfield').value + '\', ';
+				}
+				var newdate = new Date();
+				var dateStr = newdate.formatDate("yyyy-MM-dd HH:mm");
+				sql = sql + '\'' + dateStr + '\', ';
+				sql = trim(sql);
+				sql = sql.substring(0, sql.length-1);
+				sql = sql + ');';
+				//alert(sql);
+				transaction.executeSql(sql, [], insertSuccessHandler, insertErrorHandler);
+			});
+		}
+	}
+	
+	Date.prototype.formatDate = function(format)
+	{
+	    var date = this;
+	    if (!format)
+	      format="MM/dd/yyyy";               
+	
+	    var month = date.getMonth() + 1;
+	    var year = date.getFullYear();    
+	
+	    format = format.replace("MM",month.toString().padL(2,"0"));        
+	    if (format.indexOf("yyyy") > -1)
+	        format = format.replace("yyyy",year.toString());
+	    else if (format.indexOf("yy") > -1)
+	        format = format.replace("yy",year.toString().substr(2,2));
+	    format = format.replace("dd",date.getDate().toString().padL(2,"0"));
+	    var hours = date.getHours();       
+	    if (format.indexOf("t") > -1)
+	    {
+	       if (hours > 11)
+	        format = format.replace("t","pm")
+	       else
+	        format = format.replace("t","am")
+	    }
+	    if (format.indexOf("HH") > -1)
+	        format = format.replace("HH",hours.toString().padL(2,"0"));
+	    if (format.indexOf("hh") > -1) {
+	        if (hours > 12) hours - 12;
+	        if (hours == 0) hours = 12;
+	        format = format.replace("hh",hours.toString().padL(2,"0"));        
+	    }
+	    if (format.indexOf("mm") > -1)
+	       format = format.replace("mm",date.getMinutes().toString().padL(2,"0"));
+	    if (format.indexOf("ss") > -1)
+	       format = format.replace("ss",date.getSeconds().toString().padL(2,"0"));
+	    return format;
+	}
+	
+	String.repeat = function(chr,count) {    
+	    var str = ""; 
+	    for(var x=0;x<count;x++) {str += chr}; 
+	    return str;
+	}
+
+	String.prototype.padL = function(width,pad) {
+	    if (!width ||width<1)
+	        return this;   
+	 
+	    if (!pad) pad=" ";        
+	    var length = width - this.length
+	    if (length < 1) return this.substr(0,width);
+	 
+	    return (String.repeat(pad,length) + this).substr(0,width);    
+	}    
+
+	String.prototype.padR = function(width,pad) {
+	    if (!width || width<1)
+	        return this;        
+	 
+	    if (!pad) pad=" ";
+	    var length = width - this.length
+	    if (length < 1) this.substr(0,width);
+	 
+	    return (this + String.repeat(pad,length)).substr(0,width);
+	} 
+
+	function trim(s) {
+		s = s.replace(/(^\s*)|(\s*$)/gi,"");
+		s = s.replace(/[ ]{2,}/gi," ");
+		s = s.replace(/\n /,"\n");
+		return s;
+	}
+	function validate()
+	{
+		var error = "";
+		
+		<?php if($this->getField('email')): ?>
+		var emailReg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+		var emailAddress = $('emailfield').value;
+		if(!emailReg.test(emailAddress)) {
+			error = error + "Please enter your email address\n";
+			$('emailLabel').setStyle({color: 'red'});
+		} else {
+			$('emailLabel').setStyle({color: '#<?php echo $this->getFieldLabel('textcolor') ?>'});
+		}
+		<?php endif ?>
+		
+		<?php if($this->getField('dob')): ?>
+		if($('dobfield').value == "") {
+			error = error + "Please enter your date of birth\n";
+			$('dobLabel').setStyle({color: 'red'});
+		} else {
+			$('dobLabel').setStyle({color: '#<?php echo $this->getFieldLabel('textcolor') ?>'});
+		}
+		<?php endif ?>
+		
+		if(error == "") {
+			return true;
+		} else {
+			alert(error);
+			return false;
+		}
+	}
+	//this error handler fails but does not rollback or give a message, 
+	//used for creating table that fails if it exists
+	function errorHandler(transaction, error)
+	{
+	    return false;
+	}
+	
+	// specific handler, called if error adding customer to offline storage
+	function insertErrorHandler(error)
+	{
+		//alert('Oops.  Error was '+error.message+' (Code '+error.code+')');
+		alert('There was an error adding the customer. Please try again.');
+		return true;
+	}
+	
+	// specific handler, to confirm addition of customer to offline db
+	function insertSuccessHandler(transaction, results)
+	{
+		//alert('inserted');
+		location.href = "#";
+		flip();
+		if($('emailfield')) {
+			$('emailfield').value = "";
+			$('emailLabel').setStyle({color: '#<?php echo $this->getFieldLabel('textcolor') ?>'});
+		}
+		if($('phonefield')) {
+			$('phonefield').value = "";
+			$('phoneLabel').setStyle({color: '#<?php echo $this->getFieldLabel('textcolor') ?>'});
+		}
+		if($('dobread')) {
+			$('dobread').value = "";
+			$('dobLabel').setStyle({color: '#<?php echo $this->getFieldLabel('textcolor') ?>'});
+		}
+		if($('dobfield')) {
+			$('dobfield').value = "";
+		}
+		if($('contentfield')) {
+			$('contentfield').checked = true;
+		}
+		if($('subfield')) {
+			$('subfield').checked = true;
+		}
+	}
+	
+	function nullDataHandler(transaction, results)
+	{
+	}
+	//offline database connection
+	function dbConnect()
+	{
+		try {
+		    if (!window.openDatabase) {
+		        alert('not supported');
+		    } else {
+		        var shortName = 'mobilezumiez';
+		        var version = '1.0';
+		        var displayName = 'zumiez offline database';
+		        var maxSize = 13107; // in bytes
+		        var db = openDatabase(shortName, version, displayName, maxSize);
+		        
+		        //db migrations
+		        var M = new Migrator(db);
+				M.setDebugLevel(Migrator.DEBUG_HIGH);
+				M.migration(1, function(t){
+					t.executeSql("ALTER TABLE customer ADD COLUMN contest TEXT");
+					t.executeSql("ALTER TABLE customer ADD COLUMN contest_name TEXT");
+				});
+				//execute db migrations
+				M.execute();
+		    }
+		} catch(e) {
+			if (e == 2) {
+		        alert("Invalid database version.");
+		    } else {
+		        alert("Unknown error "+e+".");
+		    }
+		    return;
+		}
+		/*
+db.transaction(function(transaction) {
+			transaction.executeSql("CREATE TABLE customer (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, email TEXT, telephone TEXT, dob TEXT, gender TEXT, contest TEXT DEFAULT '0', is_subscribed TEXT DEFAULT '0', promotion_id TEXT DEFAULT '0', created_at TEXT);", [], nullDataHandler, errorHandler);
+		
+			transaction.executeSql("CREATE TABLE location (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, city TEXT NOT NULL, state TEXT NOT NULL, zip TEXT NOT NULL, dbid INTEGER NOT NULL DEFAULT 0, current INTEGER NOT NULL DEFAULT 0);", [], nullDataHandler, errorHandler);
+		});
+*/
+		return db;
+	}
+	
+	//timer for retrieving locally stored values and sending them to web action if connection is present
+  	sendData();
+  	//document.addEventListener("touchmove", function(e){e.preventDefault();}, false); 
+  	function sendData() 
+  	{
+  		var sdb = dbConnect();
+  		sdb.transaction(function (transaction) {
+  			var query = "SELECT * FROM customer;";
+  				transaction.executeSql(query, [],
+  					function (transaction, resultSet) {
+  						var string = "";
+  						if(resultSet.rows.length > 0) {
+                        	new Ajax.Request('<?php echo Mage::getBaseUrl('web') ?>mobile/index/doiexist', {
+								onSuccess: function(transport) {
+									if(transport.responseText == 'yes') {
+										sdb.transaction(
+										    function (transaction) {
+										        transaction.executeSql("DELETE FROM customer;", [], deleteConfirm, deleteError);
+										    }
+										);
+										for(var i=0; i<resultSet.rows.length; i++) {
+				                        	new Ajax.Request('<?php echo Mage::getBaseUrl('web') ?>mobile/index/submitpost/lid/<?php echo $this->getRequest()->getParam('lid') ?>', {
+				                        		parameters: resultSet.rows.item(i),
+												onSuccess: function(transport) {
+
+												}
+				                        	});
+			                        	}
+
+									} 
+								}
+                        	});
+                        	
+                        }
+  					}, errorHandler);
+		}, transactionErrorCallback);
+		setTimeout("sendData()", 10000);
+  	}
+  	function deleteConfirm()
+  	{
+  		//alert('deleted');
+  	}
+  	function deleteError()
+  	{
+  		//alert('error deleting');
+  	}
+  	
+  	function transactionErrorCallback()
+  	{
+  		
+  	}
+	
+	//setup date picker
+	function openPicker()
+	{
+		var now = new Date();
+		var days = { };
+		var years = { };
+		var months = { 01: 'Jan', 02: 'Feb', 03: 'Mar', 04: 'Apr', 05: 'May', 06: 'Jun', 07: 'Jul', 08: 'Aug', 09: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec' };
+		
+		for( var i = 1; i < 32; i += 1 ) {
+			days[i] = i;
+		}
+	
+		for( i = now.getFullYear()-100; i < now.getFullYear()+1; i += 1 ) {
+			years[i] = i;
+		}
+	
+		SpinningWheel.addSlot(months, '', now.getMonth()+1);
+		SpinningWheel.addSlot(days, 'right', now.getDate());
+		SpinningWheel.addSlot(years, 'right', now.getFullYear());
+		
+		SpinningWheel.setCancelAction(cancel);
+		SpinningWheel.setDoneAction(done);
+		
+		SpinningWheel.open();
+	}
+	
+	function done()
+	{
+		var results = SpinningWheel.getSelectedValues();
+		var textValue = results.values[0] + ' ' + results.values[1] + ', ' + results.values[2];
+		var dbValue = results.keys[0] + '/' + results.keys[1] + '/' + results.keys[2];
+		$('dobread').value = textValue;
+		$('dobfield').value = dbValue;
+	}
+	
+	function cancel()
+	{
+	
+	}
+	
+	function flip ()
+	{
+	    var element = $('card');
+	    element.className = (element.className == 'card') ? 'card flipped' : 'card';
+	}
+
+	</script>
+
+	<style type="text/css">
+		html, body		{background: #<?php echo $this->getFieldLabel('backcolor') ?>; font-family: Arial; width: 100%; min-height: 460px; font-size: 13px; margin: 0; padding: 0; -webkit-user-select: none; background-image: url(<?php echo "http://static.zumiez.com/skin/frontend/delorum/default/images/mobile/" . $this->getImage('background') ?>); background-repeat: no-repeat;}
+		input 			{font-size: 20px;}
+		select			{font-size: 20px;}
+		button			{font-size: 20px;}
+		.center 		{text-align: center;}
+		.bottom-settings-front {position: absolute; bottom: 0px; right:0px;}
+		.bottom-settings-back {position: absolute; bottom: 0px; right:0px;}
+		.fields			{margin: 20px 0px 0px 30px;}
+		.easybox		{height:25px; width: 25px;}
+		#header 		{width: 100%; height: 85px;}
+		
+		#container		{height: 100%; width: 100%; -webkit-tap-highlight-color: rgba(0,0,0,0); -webkit-perspective: 600;}
+		.card  			{position: absolute; height: 100%; width: 100%; -webkit-transform-style: preserve-3d; -webkit-transition-property: -webkit-transform; -webkit-transition-duration: .25s; }
+		.card.flipped   {-webkit-transform: rotateY(180deg);}
+		.face 			{position: absolute; height: 100%; width: 100%; -webkit-backface-visibility: hidden;}
+		.front 			{width: 100%; height: 100%;}
+		.back 			{width: 100%; height: 100%; -webkit-transform: rotateY(180deg);}
+	</style>
+</head>
